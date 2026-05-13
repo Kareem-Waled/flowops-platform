@@ -1,0 +1,56 @@
+@model List<FlowOps.Core.Entities.Deployment>
+@{ ViewData["Title"] = "History"; }
+@using FlowOps.Core.Entities
+<div style="display:flex;flex-direction:column;gap:14px">
+  <form method="get" style="display:flex;gap:8px;flex-wrap:wrap">
+    <input class="inp" style="max-width:240px" name="app" placeholder="Search by app…" value="@ViewBag.FilterApp"/>
+    <select class="inp" style="max-width:150px" name="env" onchange="this.form.submit()">
+      <option value="">All environments</option>
+      @if (ViewBag.FilterEnv == "production")
+      {
+        <option value="production" selected>production</option>
+      }
+      else
+      {
+        <option value="production">production</option>
+      }
+      @if (ViewBag.FilterEnv == "staging")
+      {
+        <option value="staging" selected>staging</option>
+      }
+      else
+      {
+        <option value="staging">staging</option>
+      }
+    </select>
+    <select class="inp" style="max-width:130px" name="status" onchange="this.form.submit()"><option value="">All statuses</option><option value="Success">Success</option><option value="Failed">Failed</option><option value="Running">Running</option></select>
+    <button type="submit" class="bsm"><i class="ti ti-search" style="font-size:12px"></i> Search</button>
+  </form>
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-history"></i>Deployment history</span><span style="font-size:12px;color:var(--t2)">@Model.Count total</span></div>
+    @if(!Model.Any()){<div style="padding:32px;text-align:center;color:var(--t2)">No deployments found</div>}
+    @foreach(var dep in Model){
+      var dotColor=dep.Status switch{DeploymentStatus.Success=>"var(--ok)",DeploymentStatus.Running=>"var(--in)",_=>"var(--er)"};
+      <div class="tl">
+        <div class="tll"><div class="tld" style="background:@dotColor"></div>@if(dep!=Model.Last()){<div class="tln"></div>}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--t)">@dep.AppName → @dep.TargetVersion</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span>@dep.TriggeredBy</span><span>@dep.Environment</span>
+            @if(!string.IsNullOrEmpty(dep.CommitHash)){<span style="font-family:monospace;font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:4px">@dep.CommitHash</span>}
+            @if(dep.Duration.HasValue){<span>@($"{dep.Duration.Value.Minutes}m {dep.Duration.Value.Seconds}s")</span>}
+            @if(dep.Status==DeploymentStatus.RolledBack){<span style="color:var(--ert);display:flex;align-items:center;gap:3px"><i class="ti ti-rotate-clockwise" style="font-size:11px"></i>auto rollback</span>}
+          </div>
+          @if(!string.IsNullOrEmpty(dep.ErrorMessage)){<div style="font-size:11px;color:var(--ert);margin-top:4px;background:var(--erb);padding:4px 8px;border-radius:4px">@dep.ErrorMessage</div>}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+          @if(dep.Status==DeploymentStatus.Success){<span class="pill p-ok">Success</span>}
+          else if(dep.Status==DeploymentStatus.Running){<span class="pill p-in"><span class="pu pu-in"></span>Running</span>}
+          else{<span class="pill p-er">@dep.Status</span>}
+          <span style="font-size:11px;color:var(--t3)">@GetTimeAgo(dep.StartedAt)</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+@functions { string GetTimeAgo(DateTime dt){var d=DateTime.UtcNow-dt;if(d.TotalSeconds<60)return "just now";if(d.TotalMinutes<60)return $"{(int)d.TotalMinutes}m ago";if(d.TotalHours<24)return $"{(int)d.TotalHours}h ago";return dt.ToString("MMM d");} }

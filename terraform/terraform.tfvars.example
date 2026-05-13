@@ -1,0 +1,8 @@
+aws_region      = "us-east-1"
+environment     = "production"
+project_name    = "flowops"
+vpc_cidr        = "10.0.0.0/16"
+node_count      = 3
+node_type       = "t3.medium"
+github_repo_url = "https://github.com/YOUR_USERNAME/flowops-manifests"
+github_token    = "YOUR_GITHUB_PAT_HERE"

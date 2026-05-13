@@ -1,0 +1,48 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.rsuser
+.vs/
+.vscode/
+
+# Docker / local runtime
+*.log
+logs/
+
+# Environment / secrets
+.env
+.env.*
+*.secret
+secrets/
+appsettings.Production.json
+appsettings.Local.json
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Kubernetes local configs
+kubeconfig
+*.kubeconfig
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test / coverage
+TestResults/
+coverage/
+*.trx
+
+# Packages
+*.nupkg

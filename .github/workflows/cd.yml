@@ -1,0 +1,33 @@
+name: CD — Update K8s Manifests
+on:
+  workflow_run:
+    workflows: ["CI — Build & Push All Services"]
+    types: [completed]
+    branches: [main]
+jobs:
+  update-manifests:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+      - name: Update staging manifests
+        run: |
+          SHA=${{ steps.sha.outputs.short }}
+          for svc in user-service product-service; do
+            FILE="k8s/manifests/staging/$svc/deployment.yaml"
+            sed -i "s|image: ghcr.io/${{ github.repository_owner }}/$svc:.*|image: ghcr.io/${{ github.repository_owner }}/$svc:${SHA}|g" $FILE
+          done
+      - name: Configure git and commit
+        run: |
+          git config user.name "FlowOps CI Bot"
+          git config user.email "ci-bot@flowops.io"
+          git add k8s/manifests/staging/
+          git diff --staged --quiet || git commit -m "deploy(staging): bump all services to ${{ steps.sha.outputs.short }} [skip ci]"
+          git push

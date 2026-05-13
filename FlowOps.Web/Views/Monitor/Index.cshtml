@@ -1,0 +1,59 @@
+@model FlowOps.Core.DTOs.MonitorSummaryDto
+@{ ViewData["Title"] = "Monitor"; }
+@using FlowOps.Core.Entities
+<div style="display:flex;flex-direction:column;gap:14px">
+  <div class="g4">
+    <div class="sc ok"><div class="sc-lbl"><i class="ti ti-heartbeat"></i>Uptime</div><div class="sc-num">99.97%</div><div class="sc-sub" style="color:var(--okt)"><span class="pu pu-ok"></span>All up</div></div>
+    <div class="sc wa"><div class="sc-lbl"><i class="ti ti-cpu"></i>CPU avg</div><div class="sc-num" id="m-cpu">@Model.CpuAvgPercent%</div><div class="sc-sub" style="color:var(--t2)">all pods</div></div>
+    <div class="sc in"><div class="sc-lbl"><i class="ti ti-database"></i>Memory avg</div><div class="sc-num" id="m-mem">@Model.MemoryAvgPercent%</div><div class="sc-sub" style="color:var(--int)"><span class="pu pu-in"></span>Moderate</div></div>
+    <div class="sc ac"><div class="sc-lbl"><i class="ti ti-bolt"></i>Req / s</div><div class="sc-num" id="m-rps">@Model.RequestsPerSecond</div><div class="sc-sub" style="color:var(--okt)"><i class="ti ti-arrow-up" style="font-size:11px"></i>+8%</div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="ch"><span class="ct"><i class="ti ti-chart-line"></i>CPU over time</span><button class="bsm" onclick="refreshCharts()">Refresh</button></div><div style="padding:14px 16px"><div style="height:180px"><canvas id="c-cpu-m"></canvas></div></div></div>
+    <div class="card"><div class="ch"><span class="ct"><i class="ti ti-chart-area"></i>Memory over time</span><button class="bsm" onclick="refreshCharts()">Refresh</button></div><div style="padding:14px 16px"><div style="height:180px"><canvas id="c-mem-m"></canvas></div></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-alert-triangle"></i>Active alerts</span>
+      @{ var crit=Model.ActiveAlerts.Count(a=>a.Severity==AlertSeverity.Critical&&!a.IsResolved); var warn=Model.ActiveAlerts.Count(a=>a.Severity==AlertSeverity.Warning&&!a.IsResolved); }
+      <div style="display:flex;gap:6px">
+        @if(crit>0){<span class="pill p-er"><span class="pu pu-er"></span>@crit critical</span>}
+        @if(warn>0){<span class="pill p-wa"><span class="pu pu-wa"></span>@warn warning</span>}
+        @if(crit==0&&warn==0){<span class="pill p-ok"><span class="pu pu-ok"></span>All clear</span>}
+      </div>
+    </div>
+    @foreach(var alert in Model.ActiveAlerts){
+      var bg=alert.Severity==AlertSeverity.Critical?"var(--erb)":alert.Severity==AlertSeverity.Warning?"var(--wab)":"var(--inb)";
+      var fc=alert.Severity==AlertSeverity.Critical?"var(--er)":alert.Severity==AlertSeverity.Warning?"var(--wa)":"var(--in)";
+      <div class="ri">
+        <div style="width:30px;height:30px;border-radius:var(--rs);background:@bg;color:@fc;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"><i class="ti ti-alert-triangle"></i></div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--t)">@alert.Message</div><div style="font-size:11px;color:var(--t2)">@alert.AppName</div></div>
+        @if(alert.IsResolved){<span class="pill p-ok">Resolved</span>}
+        else if(alert.Severity==AlertSeverity.Critical){<span class="pill p-er">Critical</span>}
+        else if(alert.Severity==AlertSeverity.Warning){<span class="pill p-wa">Warning</span>}
+        else{<span class="pill p-in">Info</span>}
+      </div>
+    }
+  </div>
+</div>
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const cpuData=@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CpuSeries.Select(p=>p.Value)));
+const memData=@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MemorySeries.Select(p=>p.Value)));
+const labels=@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CpuSeries.Select(p=>p.Timestamp.ToString("HH:mm"))));
+let cpuC,memC;
+function buildCharts(cd,md,lb){
+  const o=(color,data)=>({type:'line',data:{labels:lb,datasets:[{data,borderColor:color,borderWidth:1.5,pointRadius:0,fill:true,backgroundColor:color+'18',tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10},color:'#94a3b8'},grid:{color:'#1e2435'}},y:{ticks:{font:{size:10},color:'#94a3b8'},grid:{color:'#1e2435'},min:0,max:100}}}});
+  if(cpuC)cpuC.destroy();if(memC)memC.destroy();
+  cpuC=new Chart(document.getElementById('c-cpu-m'),o('#10b981',cd));
+  memC=new Chart(document.getElementById('c-mem-m'),o('#f59e0b',md));
+}
+buildCharts(cpuData,memData,labels);
+async function refreshCharts(){
+  const r=await fetch('/api/monitor/series');const d=await r.json();
+  const lb=d.cpu.map(p=>new Date(p.timestamp).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'}));
+  buildCharts(d.cpu.map(p=>p.value),d.memory.map(p=>p.value),lb);
+  showToast('ok','Refreshed','Charts updated');
+}
+setInterval(refreshCharts,30_000);
+</script>}

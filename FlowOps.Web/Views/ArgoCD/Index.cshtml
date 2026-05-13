@@ -1,0 +1,62 @@
+@model FlowOps.Core.DTOs.ArgoSummaryDto
+@{ ViewData["Title"] = "ArgoCD sync"; }
+@using FlowOps.Core.Entities
+<div style="display:flex;flex-direction:column;gap:14px">
+  <div class="g4">
+    <div class="sc ok"><div class="sc-lbl"><i class="ti ti-apps"></i>Apps synced</div><div class="sc-num">@Model.SyncedCount / @Model.TotalCount</div><div class="sc-sub" style="color:var(--okt)"><span class="pu pu-ok"></span>@(Model.SyncedCount==Model.TotalCount?"All healthy":"Some out of sync")</div></div>
+    <div class="sc in"><div class="sc-lbl"><i class="ti ti-git-branch"></i>Last sync</div><div class="sc-num">@Model.LastSyncAgo</div><div class="sc-sub" style="color:var(--t2)">branch: main</div></div>
+    <div class="sc ac"><div class="sc-lbl"><i class="ti ti-git-commit"></i>Latest commit</div><div class="sc-num" style="font-size:16px;font-family:monospace">@(Model.LatestCommitHash??"—")</div><div class="sc-sub" style="color:var(--t2)">@Model.LatestCommitAuthor</div></div>
+    <div class="sc wa"><div class="sc-lbl"><i class="ti ti-clock"></i>Sync interval</div><div class="sc-num">3 min</div><div class="sc-sub" style="color:var(--t2)">auto-poll</div></div>
+  </div>
+  <div class="card">
+    <div class="ch">
+      <span class="ct"><i class="ti ti-apps"></i>Application sync status</span>
+      <button class="bsm" onclick="forceSyncAll()"><i class="ti ti-refresh" style="font-size:12px"></i> Force sync all</button>
+    </div>
+    @foreach(var app in Model.Apps){
+      var sc=app.SyncStatus switch{SyncStatus.Synced=>("p-ok","pu-ok"),SyncStatus.Syncing=>("p-in","pu-in"),SyncStatus.OutOfSync=>("p-wa","pu-wa"),_=>("p-er","pu-er")};
+      var initials=app.AppName.Length>=2?app.AppName[..2].ToUpper():"??";
+      <div class="ri" onclick="forceSync('@app.AppName')">
+        <div class="ai" style="background:var(--acc3);color:var(--acc2)">@initials</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--t)">@app.AppName</div>
+          <div style="font-size:11px;color:var(--t2);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap">
+            @if(!string.IsNullOrEmpty(app.CommitHash)){<span style="font-family:monospace">@app.CommitHash</span>}
+            <span>@app.Environment</span>
+            @if(app.LastSyncedAt.HasValue){<span>synced @GetTimeAgo(app.LastSyncedAt.Value)</span>}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <span class="pill @sc.Item1"><span class="pu @sc.Item2"></span>@app.SyncStatus</span>
+          <span class="pill" style="background:var(--bg3);color:var(--t2);font-size:10px">@app.HealthStatus</span>
+        </div>
+      </div>
+    }
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><span class="ct"><i class="ti ti-git-branch"></i>Repository info</span></div>
+      <div class="ir"><span class="ik"><i class="ti ti-brand-github" style="font-size:15px"></i>Repo</span><span class="iv">github.com/flowops-manifests</span></div>
+      <div class="ir"><span class="ik"><i class="ti ti-git-branch" style="font-size:15px"></i>Branch</span><span class="iv">main</span></div>
+      <div class="ir"><span class="ik"><i class="ti ti-folder" style="font-size:15px"></i>Path</span><span class="iv">/k8s/manifests</span></div>
+      <div class="ir"><span class="ik"><i class="ti ti-clock" style="font-size:15px"></i>Interval</span><span class="iv">3 min</span></div>
+      <div class="ir"><span class="ik"><i class="ti ti-shield-check" style="font-size:15px"></i>Status</span>
+        @if((bool?)ViewBag.RepoHealthy==true){<span class="pill p-ok" style="font-size:10px">Connected</span>}else{<span class="pill p-er" style="font-size:10px">Unreachable</span>}
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct"><i class="ti ti-history"></i>Sync log</span></div>
+      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:9px">
+        @foreach(var app in Model.Apps.Take(4)){
+          var puC=app.SyncStatus==SyncStatus.Synced?"pu-ok":app.SyncStatus==SyncStatus.Syncing?"pu-in":"pu-er";
+          <div style="display:flex;align-items:flex-start;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--bd)">
+            <span class="pu @puC" style="margin-top:4px"></span>
+            <div><div style="font-size:12px;color:var(--t)">@(app.SyncStatus==SyncStatus.Syncing?"Syncing":"Synced") @app.AppName</div>
+            <div style="font-size:11px;color:var(--t2)">@app.CommitHash · @(app.LastSyncedAt.HasValue?GetTimeAgo(app.LastSyncedAt.Value):"—")</div></div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+@functions { string GetTimeAgo(DateTime dt){var d=DateTime.UtcNow-dt;if(d.TotalSeconds<60)return "just now";if(d.TotalMinutes<60)return $"{(int)d.TotalMinutes}m ago";return $"{(int)d.TotalHours}h ago";} }

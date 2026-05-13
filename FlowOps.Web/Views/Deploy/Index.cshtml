@@ -1,0 +1,66 @@
+@{ ViewData["Title"] = "Deploy"; }
+@using FlowOps.Core.Entities
+<div class="g2">
+  <div class="card" style="grid-row:span 2">
+    <div class="ch"><span class="ct"><i class="ti ti-rocket"></i>New deployment</span></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
+      <form id="deploy-form">
+        @Html.AntiForgeryToken()
+        <div class="ig" style="margin-bottom:13px"><label class="lbl2">Application</label>
+          <select class="inp" name="AppName">
+            @foreach(var app in (List<Application>)ViewBag.Apps){ <option value="@app.Name">@app.Name</option> }
+          </select></div>
+        <div class="ig" style="margin-bottom:13px"><label class="lbl2">Target environment</label>
+          <select class="inp" name="Environment"><option value="production">production</option><option value="staging">staging</option><option value="development">development</option></select></div>
+        <div class="ig" style="margin-bottom:13px"><label class="lbl2">Version / image tag</label><input class="inp" name="ImageTag" value="v2.5.0"/></div>
+        <div class="ig" style="margin-bottom:13px"><label class="lbl2">Replicas</label><input class="inp" type="number" name="Replicas" value="3" min="1" max="10"/></div>
+        <div class="ig" style="margin-bottom:13px"><label class="lbl2">Strategy</label>
+          <select class="inp" name="Strategy"><option value="0">Rolling update</option><option value="1">Blue / Green</option><option value="2">Canary</option></select></div>
+        <input type="hidden" name="TriggeredBy" value="Kareem & Abdel Nasser"/>
+        <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;display:flex;align-items:center;gap:8px;margin-bottom:13px">
+          <i class="ti ti-shield-check" style="font-size:16px;color:var(--okt)"></i>
+          <span style="font-size:12px;color:var(--t2)">ArgoCD auto-syncs after GitHub commit</span>
+        </div>
+        <button type="button" class="bf" onclick="triggerDeploy()"><i class="ti ti-rocket"></i>Trigger deployment</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-list-check"></i>Pipeline steps</span></div>
+    <div style="padding:14px 16px">
+      <div class="step"><div class="stn" id="step-1">1</div><div style="flex:1"><div style="font-size:13px;color:var(--t)">Commit to GitHub</div><div style="font-size:11px;color:var(--t2)">Updates K8s manifest</div></div><span id="s1" style="font-size:11px;color:var(--t3)">Pending</span></div>
+      <div class="step"><div class="stn" id="step-2">2</div><div style="flex:1"><div style="font-size:13px;color:var(--t)">ArgoCD detected change</div><div style="font-size:11px;color:var(--t2)">Pulled from repo</div></div><span id="s2" style="font-size:11px;color:var(--t3)">Pending</span></div>
+      <div class="step"><div class="stn" id="step-3">3</div><div style="flex:1"><div style="font-size:13px;color:var(--t)">Kubernetes rolling update</div><div style="font-size:11px;color:var(--t2)">Replacing pods</div></div><span id="s3" style="font-size:11px;color:var(--t3)">Pending</span></div>
+      <div class="step"><div class="stn" id="step-4">4</div><div style="flex:1"><div style="font-size:13px;color:var(--t)">Health check</div></div><span id="s4" style="font-size:11px;color:var(--t3)">Pending</span></div>
+      <div class="step"><div class="stn" id="step-5">5</div><div style="flex:1"><div style="font-size:13px;color:var(--t)">Complete</div></div><span id="s5" style="font-size:11px;color:var(--t3)">Pending</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-clock"></i>Recent deployments</span></div>
+    <div style="padding:10px 16px;display:flex;flex-direction:column;gap:7px">
+      @foreach(var dep in (List<Deployment>)ViewBag.Recent){
+        <div style="display:flex;align-items:center;gap:8px;padding-bottom:7px;border-bottom:1px solid var(--bd)">
+          <span class="pu @(dep.Status==DeploymentStatus.Success?"pu-ok":dep.Status==DeploymentStatus.Running?"pu-in":"pu-er")"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--t)">@dep.AppName @dep.TargetVersion</div><div style="font-size:11px;color:var(--t2)">@dep.Environment</div></div>
+          <span class="pill @(dep.Status==DeploymentStatus.Success?"p-ok":dep.Status==DeploymentStatus.Running?"p-in":"p-er")">@dep.Status</span>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+async function triggerDeploy(){
+  const form=document.getElementById('deploy-form');
+  const data=new FormData(form);
+  showToast('in','Deploying','Queuing deployment…');
+  try{
+    const r=await fetch('/Deploy/Trigger',{method:'POST',body:data});
+    const d=await r.json();
+    if(d.deploymentId){showToast('ok','Deployment queued',`ID: ${d.deploymentId.slice(0,8)}`);pollDeploymentStatus(d.deploymentId);}
+  }catch(e){showToast('er','Error','Failed to trigger deployment');}
+}
+</script>}

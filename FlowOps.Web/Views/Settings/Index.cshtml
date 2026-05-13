@@ -1,0 +1,76 @@
+@{ ViewData["Title"] = "Settings"; }
+@if(TempData["Success"] is string msg){<div style="background:var(--okb);border:1px solid var(--ok);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:10px;color:var(--okt);margin-bottom:14px"><i class="ti ti-check" style="font-size:16px"></i>@msg</div>}
+<style>
+.stab{padding:9px 16px;border:none;background:none;color:var(--t2);font-size:13px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.stab:hover{color:var(--t)}.stab.on{color:var(--acc2);border-bottom-color:var(--acc);font-weight:500}
+.tab-pane{display:none;flex-direction:column;gap:14px}.tab-pane.show{display:flex}
+</style>
+<div style="display:flex;border-bottom:1px solid var(--bd);margin-bottom:14px">
+  <button class="stab on" id="tab-gen" onclick="showTab('gen')">General</button>
+  <button class="stab" id="tab-int" onclick="showTab('int')">Integrations</button>
+  <button class="stab" id="tab-notif" onclick="showTab('notif')">Notifications</button>
+  <button class="stab" id="tab-team" onclick="showTab('team')">Team</button>
+</div>
+
+<div class="tab-pane show" id="pane-gen">
+  <form asp-action="Save" method="post">
+    @Html.AntiForgeryToken()
+    <div class="card">
+      <div class="ch"><span class="ct"><i class="ti ti-settings"></i>Platform settings</span></div>
+      <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">Auto-sync on push</div><div style="font-size:11px;color:var(--t2);margin-top:2px">ArgoCD syncs when GitHub receives a push</div></div><div class="tsw on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">Auto-rollback on failure</div><div style="font-size:11px;color:var(--t2);margin-top:2px">Revert to last stable version if health check fails</div></div><div class="tsw on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">Require approval for production</div><div style="font-size:11px;color:var(--t2);margin-top:2px">Manual gate before deploying to production</div></div><div class="tsw" onclick="this.classList.toggle('on')"></div></div>
+    </div>
+    <div class="card">
+      <div class="ch"><span class="ct"><i class="ti ti-adjustments"></i>Deploy defaults</span></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="ig"><label class="lbl2">Default replicas</label><input class="inp" type="number" name="DefaultReplicas" value="3" min="1" max="20" style="max-width:180px"/></div>
+        <div class="ig"><label class="lbl2">Default strategy</label><select class="inp" name="DefaultStrategy" style="max-width:220px"><option value="Rolling">Rolling update</option><option value="BlueGreen">Blue / Green</option><option value="Canary">Canary</option></select></div>
+        <div class="ig"><label class="lbl2">Health check timeout (s)</label><input class="inp" type="number" name="HealthCheckTimeout" value="120" min="30" style="max-width:180px"/></div>
+        <button type="submit" class="bf" style="max-width:200px"><i class="ti ti-check"></i>Save changes</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="tab-pane" id="pane-int">
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-plug"></i>Integrations</span></div>
+    <div class="ri"><div style="width:32px;height:32px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-brand-github" style="font-size:18px;color:var(--t)"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t)">GitHub</div><div style="font-size:11px;color:var(--t2)">Manifest repository · main branch</div></div><span class="pill p-ok">Connected</span></div>
+    <div class="ri"><div style="width:32px;height:32px;border-radius:8px;background:var(--inb);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-refresh" style="font-size:18px;color:var(--int)"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t)">ArgoCD</div><div style="font-size:11px;color:var(--t2)">argocd.flowops.local · v2.9.3</div></div><span class="pill p-ok">Connected</span></div>
+    <div class="ri"><div style="width:32px;height:32px;border-radius:8px;background:var(--wab);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-chart-bar" style="font-size:18px;color:var(--wat)"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t)">Prometheus</div><div style="font-size:11px;color:var(--t2)">prometheus.flowops.local:9090</div></div><span class="pill p-ok">Connected</span></div>
+    <div class="ri"><div style="width:32px;height:32px;border-radius:8px;background:var(--okb);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-chart-area" style="font-size:18px;color:var(--okt)"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t)">Grafana</div><div style="font-size:11px;color:var(--t2)">grafana.flowops.local:3000</div></div><span class="pill p-ok">Connected</span></div>
+    <div class="ri"><div style="width:32px;height:32px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-brand-slack" style="font-size:18px;color:var(--t2)"></i></div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t)">Slack</div><div style="font-size:11px;color:var(--t2)">Not connected</div></div><button class="bsm" onclick="showToast('in','Slack','Opening Slack OAuth…')">Connect</button></div>
+  </div>
+</div>
+
+<div class="tab-pane" id="pane-notif">
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-bell"></i>Notification preferences</span></div>
+    <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">Deployment success</div><div style="font-size:11px;color:var(--t2)">Notify when deployment completes</div></div><div class="tsw on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">Deployment failure</div><div style="font-size:11px;color:var(--t2)">Alert immediately on failure</div></div><div class="tsw on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">Auto-rollback triggered</div><div style="font-size:11px;color:var(--t2)">Notify when rollback fires automatically</div></div><div class="tsw on" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">High resource usage</div><div style="font-size:11px;color:var(--t2)">Alert when CPU or memory exceeds threshold</div></div><div class="tsw" onclick="this.classList.toggle('on')"></div></div>
+    <div class="sr"><div><div style="font-size:13px;font-weight:500;color:var(--t)">ArgoCD sync failed</div><div style="font-size:11px;color:var(--t2)">Notify when ArgoCD cannot sync</div></div><div class="tsw on" onclick="this.classList.toggle('on')"></div></div>
+    <div style="padding:14px 16px"><button class="bf" style="max-width:200px" onclick="showToast('ok','Saved','Preferences saved')"><i class="ti ti-check"></i>Save preferences</button></div>
+  </div>
+</div>
+
+<div class="tab-pane" id="pane-team">
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-users"></i>Team members</span><button class="bsm" onclick="showToast('in','Invite','Opening invite form…')"><i class="ti ti-plus" style="font-size:12px"></i> Invite</button></div>
+    <div class="ri"><div class="av">KA</div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t)">Kareem</div><div style="font-size:11px;color:var(--t2)">kareem@flowops.io</div></div><span class="pill p-ac">Owner</span></div>
+    <div class="ri"><div class="av" style="background:#0f6e56">AN</div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--t)">Abdel Nasser</div><div style="font-size:11px;color:var(--t2)">abdelnasser@flowops.io</div></div><span class="pill p-in">DevOps Engineer</span></div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+function showTab(t){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.stab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pane-'+t).classList.add('show');
+  document.getElementById('tab-'+t).classList.add('on');
+}
+document.querySelectorAll('.tsw').forEach(sw=>sw.addEventListener('click',()=>sw.classList.toggle('on')));
+</script>}

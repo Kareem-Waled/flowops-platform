@@ -1,0 +1,59 @@
+@model List<FlowOps.Core.Entities.ClusterInfo>
+@{ ViewData["Title"] = "Environments"; }
+@using FlowOps.Core.Entities
+<div style="display:flex;flex-direction:column;gap:14px">
+  <div class="g4">
+    <div class="sc ok"><div class="sc-lbl"><i class="ti ti-server"></i>Clusters</div><div class="sc-num">@Model.Count</div><div class="sc-sub" style="color:var(--okt)"><span class="pu pu-ok"></span>All reachable</div></div>
+    <div class="sc in"><div class="sc-lbl"><i class="ti ti-box"></i>Total pods</div><div class="sc-num">@Model.Sum(c=>c.TotalPods)</div><div class="sc-sub" style="color:var(--t2)">all namespaces</div></div>
+    <div class="sc wa"><div class="sc-lbl"><i class="ti ti-cpu"></i>Avg CPU</div><div class="sc-num">@(Model.Any()?$"{Model.Average(c=>c.CpuUsagePercent):F0}%":"—")</div><div class="sc-sub" style="color:var(--t2)">healthy</div></div>
+    <div class="sc ac"><div class="sc-lbl"><i class="ti ti-bolt"></i>K8s version</div><div class="sc-num" style="font-size:17px">v1.30</div><div class="sc-sub" style="color:var(--t2)">all clusters</div></div>
+  </div>
+  <div class="g3">
+    @foreach(var c in Model){
+      var sc=c.Status switch{ClusterStatus.Healthy=>("p-ok","pu-ok"),ClusterStatus.Degraded=>("p-wa","pu-wa"),_=>( "p-er","pu-er")};
+      var cpuColor=c.CpuUsagePercent>80?"var(--er)":c.CpuUsagePercent>60?"var(--wa)":"var(--ok)";
+      var memColor=c.MemoryUsagePercent>85?"var(--er)":c.MemoryUsagePercent>70?"var(--wa)":"var(--ok)";
+      <div class="cc">
+        <div class="cch">
+          <div><div style="font-size:14px;font-weight:500;color:var(--t)">@c.Name</div><div style="font-size:11px;color:var(--t2);margin-top:2px">@c.Region · @c.Provider</div></div>
+          <span class="pill @sc.Item1"><span class="pu @sc.Item2"></span>@c.Status</span>
+        </div>
+        <div class="ccb">
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--t2)">Nodes</span><span style="font-size:12px;font-weight:500;color:var(--t)">@c.ReadyNodes / @c.TotalNodes</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--t2)">Pods</span><span style="font-size:12px;font-weight:500;color:var(--t)">@c.TotalPods running</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--t2)">CPU</span><span style="font-size:12px;font-weight:500;color:var(--t)">@($"{c.CpuUsagePercent:F0}")%</span></div>
+          <div class="pb"><div class="pf" style="width:@c.CpuUsagePercent%;background:@cpuColor"></div></div>
+          <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--t2)">Memory</span><span style="font-size:12px;font-weight:500;color:var(--t)">@($"{c.MemoryUsagePercent:F0}")%</span></div>
+          <div class="pb"><div class="pf" style="width:@c.MemoryUsagePercent%;background:@memColor"></div></div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">
+            @if(c.ArgoSynced){<span class="tag tok">ArgoCD synced</span>}
+            @if(c.TerraformManaged){<span class="tag tin">Terraform</span>}
+          </div>
+        </div>
+        <div class="ccf">
+          <a class="bo" asp-controller="Clusters" asp-action="Inspect" asp-route-name="@c.Name"><i class="ti ti-eye" style="font-size:13px"></i>Inspect</a>
+          <a class="bo" asp-controller="Deploy" asp-action="Index"><i class="ti ti-rocket" style="font-size:13px"></i>Deploy</a>
+        </div>
+      </div>
+    }
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-chart-bar"></i>Resource usage across environments</span></div>
+    <div style="padding:14px 16px"><div style="height:180px"><canvas id="c-envs"></canvas></div></div>
+  </div>
+</div>
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('c-envs'),{
+  type:'bar',
+  data:{
+    labels:@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(c=>c.Name))),
+    datasets:[
+      {label:'CPU %',   data:@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(c=>c.CpuUsagePercent))),   backgroundColor:'#10b98155',borderColor:'#10b981',borderWidth:1},
+      {label:'Memory %',data:@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(c=>c.MemoryUsagePercent))),backgroundColor:'#f59e0b55',borderColor:'#f59e0b',borderWidth:1}
+    ]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#94a3b8'}}},
+    scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#1e2435'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#1e2435'},min:0,max:100}}}
+});
+</script>}

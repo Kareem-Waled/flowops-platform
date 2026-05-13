@@ -1,0 +1,33 @@
+@model FlowOps.Core.Entities.ClusterInfo
+@{ ViewData["Title"] = $"Cluster — {Model.Name}"; }
+@using FlowOps.Core.Entities
+<div style="display:flex;flex-direction:column;gap:14px">
+  <div><a asp-controller="Clusters" asp-action="Index" style="font-size:13px;color:var(--t2);display:inline-flex;align-items:center;gap:5px;text-decoration:none"><i class="ti ti-arrow-left"></i>Back to clusters</a></div>
+  <div class="card">
+    <div style="padding:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="width:44px;height:44px;border-radius:10px;background:var(--acc3);color:var(--acc2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0"><i class="ti ti-server"></i></div>
+      <div style="flex:1"><div style="font-size:16px;font-weight:500;color:var(--t)">@Model.Name</div><div style="font-size:12px;color:var(--t2);margin-top:2px">@Model.Provider · @Model.Region · K8s @Model.KubernetesVersion</div></div>
+      @{ var sc=Model.Status switch{ClusterStatus.Healthy=>("p-ok","pu-ok"),ClusterStatus.Degraded=>("p-wa","pu-wa"),_=>("p-er","pu-er")}; }
+      <span class="pill @sc.Item1" style="font-size:12px;padding:5px 12px"><span class="pu @sc.Item2"></span>@Model.Status</span>
+    </div>
+  </div>
+  <div class="g4">
+    <div class="sc ok"><div class="sc-lbl"><i class="ti ti-circles-relation"></i>Nodes</div><div class="sc-num">@Model.ReadyNodes / @Model.TotalNodes</div><div class="sc-sub" style="color:var(--okt)">ready</div></div>
+    <div class="sc in"><div class="sc-lbl"><i class="ti ti-box"></i>Pods</div><div class="sc-num">@Model.TotalPods</div><div class="sc-sub" style="color:var(--t2)">running</div></div>
+    <div class="sc wa"><div class="sc-lbl"><i class="ti ti-cpu"></i>CPU</div><div class="sc-num">@($"{Model.CpuUsagePercent:F0}")%</div><div class="pb" style="margin-top:8px"><div class="pf" style="width:@Model.CpuUsagePercent%;background:@(Model.CpuUsagePercent>80?"var(--er)":"var(--ok)")"></div></div></div>
+    <div class="sc in"><div class="sc-lbl"><i class="ti ti-database"></i>Memory</div><div class="sc-num">@($"{Model.MemoryUsagePercent:F0}")%</div><div class="pb" style="margin-top:8px"><div class="pf" style="width:@Model.MemoryUsagePercent%;background:@(Model.MemoryUsagePercent>85?"var(--er)":"var(--wa)")"></div></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><span class="ct"><i class="ti ti-box"></i>Running pods</span><span style="font-size:12px;color:var(--t2)">@((ViewBag.Pods as List<Pod>)?.Count??0) total</span></div>
+    @{ var pods=ViewBag.Pods as List<Pod>??new List<Pod>(); }
+    @if(!pods.Any()){<div style="padding:24px;text-align:center;color:var(--t2)">No pods found</div>}
+    @foreach(var pod in pods.Take(15)){
+      var psc=pod.Status switch{PodStatus.Running=>("p-ok","pu-ok"),PodStatus.Pending=>("p-in","pu-in"),PodStatus.Failed=>("p-er","pu-er"),_=>("p-wa","pu-wa")};
+      <div class="ri">
+        <div style="width:30px;height:30px;border-radius:var(--rs);background:var(--acc3);color:var(--acc2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0"><i class="ti ti-box"></i></div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--t)">@pod.Name</div><div style="font-size:11px;color:var(--t2);margin-top:2px">@pod.Namespace · node: @pod.NodeName@if(pod.RestartCount>0){<span style="color:var(--wa)"> · @pod.RestartCount restarts</span>}</div></div>
+        <span class="pill @psc.Item1"><span class="pu @psc.Item2"></span>@pod.Status</span>
+      </div>
+    }
+  </div>
+</div>

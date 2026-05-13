@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>FlowOps — @ViewData["Title"]</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@3.0.0/tabler-icons.min.css"/>
+  <link rel="stylesheet" href="~/css/flowops.css" asp-append-version="true"/>
+</head>
+<body>
+<div class="shell" id="app">
+
+  <aside class="sb">
+    <div class="logo-a">
+      <div class="gem"><i class="ti ti-topology-star-3"></i></div>
+      <div><div class="logo-name">FlowOps</div><div class="logo-tag">GitOps Platform</div></div>
+    </div>
+
+    <div class="sg"><div class="sl">Overview</div>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Dashboard"?"on":"")" asp-controller="Dashboard" asp-action="Index"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Monitor"?"on":"")" asp-controller="Monitor" asp-action="Index"><i class="ti ti-activity"></i>Monitor<span class="cnt" id="alert-count" style="display:none">0</span></a>
+    </div>
+
+    <div class="sg"><div class="sl">Delivery</div>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Deploy"?"on":"")" asp-controller="Deploy" asp-action="Index"><i class="ti ti-rocket"></i>Deploy</a>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="History"?"on":"")" asp-controller="History" asp-action="Index"><i class="ti ti-history"></i>History</a>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Environments"?"on":"")" asp-controller="Environments" asp-action="Index"><i class="ti ti-layers-intersect"></i>Environments</a>
+    </div>
+
+    <div class="sg"><div class="sl">GitOps</div>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="ArgoCD"?"on":"")" asp-controller="ArgoCD" asp-action="Index"><i class="ti ti-refresh"></i>ArgoCD sync<span class="lv"></span></a>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Clusters"?"on":"")" asp-controller="Clusters" asp-action="Index"><i class="ti ti-server"></i>Clusters</a>
+    </div>
+
+    <div class="sg"><div class="sl">System</div>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Settings"?"on":"")" asp-controller="Settings" asp-action="Index"><i class="ti ti-settings"></i>Settings</a>
+    </div>
+
+    <div class="sf">
+      <div class="ur">
+        <div class="av">KA</div>
+        <div><div class="u-name">Kareem & Abdel Nasser</div><div class="u-role">DevOps Engineers</div></div>
+        <i class="ti ti-dots-vertical" style="font-size:14px;color:var(--t3)"></i>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="tb">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div class="bc">
+          <span>FlowOps</span>
+          <i class="ti ti-chevron-right" style="font-size:12px"></i>
+          <span style="color:var(--t);font-weight:500">@ViewData["Title"]</span>
+        </div>
+        <div class="sync-b"><span class="sync-d"></span>ArgoCD synced</div>
+      </div>
+      <div class="tr-right">
+        <label class="tgl-w" title="Toggle theme">
+          <div class="tgl on" id="dm-tgl"></div>
+          <i class="ti ti-sun" style="font-size:14px;color:var(--t2)"></i>
+        </label>
+        <button class="ib nd" id="notif-btn" aria-label="Notifications"><i class="ti ti-bell"></i></button>
+        <button class="ib" onclick="refreshPage(this)" aria-label="Refresh"><i class="ti ti-refresh"></i></button>
+        <a class="btn-p" asp-controller="Deploy" asp-action="Index"><i class="ti ti-rocket"></i>New deploy ↗</a>
+      </div>
+    </div>
+    <div class="page-content">@RenderBody()</div>
+  </div>
+</div>
+
+<div class="toast-area" id="toasts"></div>
+
+<script src="~/js/flowops.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

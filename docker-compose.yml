@@ -1,0 +1,39 @@
+services:
+  flowops-portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: flowops-portal
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      FlowOps__UseMocks: "true"
+    ports:
+      - "5000:8080"
+    depends_on:
+      - user-service
+      - product-service
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      APP_VERSION: v1
+    ports:
+      - "5101:8080"
+
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+      APP_VERSION: v1
+    ports:
+      - "5102:8080"
