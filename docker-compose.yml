@@ -7,6 +7,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: 8080
+      DOTNET_USE_POLLING_FILE_WATCHER: true
       FlowOps__UseMocks: "true"
     ports:
       - "5000:8080"
@@ -22,6 +23,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: 8080
+      DOTNET_USE_POLLING_FILE_WATCHER: true
       APP_VERSION: v1
     ports:
       - "5101:8080"
@@ -34,6 +36,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: 8080
+      DOTNET_USE_POLLING_FILE_WATCHER: true
       APP_VERSION: v1
     ports:
       - "5102:8080"
