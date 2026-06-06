@@ -26,14 +26,17 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: ghcr.io/YOUR_GITHUB_USER/user-service:latest
+        image: flowops_2microservices_fixed-user-service:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
         env:
         - name: ASPNETCORE_ENVIRONMENT
           value: "Production"
-        - name: ASPNETCORE_URLS
-          value: "http://+:8080"
+        - name: ASPNETCORE_HTTP_PORTS
+          value: "8080"
+        - name: DOTNET_USE_POLLING_FILE_WATCHER
+          value: "true"
         - name: APP_VERSION
           value: "v1"
         resources:
