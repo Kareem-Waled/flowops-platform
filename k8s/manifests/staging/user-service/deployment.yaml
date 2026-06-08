@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: user-service
-        image: flowops_2microservices_fixed-user-service:latest
+        image: ahmednazir490/flowops-user-service:1
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
