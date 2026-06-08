@@ -1,0 +1,17 @@
+grafana:
+  adminUser: admin
+  adminPassword: admin123
+  service:
+    type: ClusterIP
+  image:
+    repository: grafana/grafana
+    tag: "10.4.3"
+    pullPolicy: IfNotPresent
+
+prometheus:
+  service:
+    type: ClusterIP
+
+alertmanager:
+  service:
+    type: ClusterIP
