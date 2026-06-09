@@ -62,3 +62,40 @@ k8s/manifests/         Kubernetes manifests for production and staging
 4. Deploy manifests to Kubernetes.
 5. Install ArgoCD.
 6. Let ArgoCD sync from the GitOps repository.
+
+---
+
+## Implemented DevOps Pipeline
+
+This project currently includes:
+
+- Docker Compose local runtime
+- Kubernetes staging deployment
+- Kubernetes production deployment
+- ArgoCD GitOps synchronization
+- Jenkins smoke build job
+- Jenkins staging deployment job
+- Jenkins production deployment job
+- DockerHub image publishing
+- Prometheus monitoring
+- Grafana dashboard access
+
+## Demo URLs
+
+Jenkins:    http://<VM_IP>:8081
+Grafana:    http://<VM_IP>:33000
+Prometheus: http://<VM_IP>:39090
+
+## Final Verification
+
+Use these commands to verify the platform:
+
+    kubectl get applications -n argocd
+    kubectl get pods -n staging
+    kubectl get pods -n production
+    kubectl get pods -n monitoring
+    helm list -n monitoring
+
+## Latest Stable Tag
+
+    v0.9-monitoring-prometheus-grafana
