@@ -99,3 +99,11 @@ Use these commands to verify the platform:
 ## Latest Stable Tag
 
     v0.9-monitoring-prometheus-grafana
+
+---
+
+## Final Release
+
+    v1.0-flowops-final
+
+This tag represents the final stable version of the FlowOps graduation project.
