@@ -163,7 +163,113 @@ public class SettingsController : Controller
     public IActionResult Save(){TempData["Success"]="Settings saved successfully";return RedirectToAction(nameof(Index));}
 }
 
+public record PortalLogEvent(DateTime Time, string Level, string Source, string Message);
+
 public class LogsController : Controller
 {
-    public IActionResult Index() => View();
+    private readonly IDeploymentService _deploys;
+    private readonly IKubernetesService _k8s;
+    private readonly IArgoCDService _argo;
+    private readonly IPrometheusService _prom;
+
+    public LogsController(
+        IDeploymentService deploys,
+        IKubernetesService k8s,
+        IArgoCDService argo,
+        IPrometheusService prom)
+    {
+        _deploys = deploys;
+        _k8s = k8s;
+        _argo = argo;
+        _prom = prom;
+    }
+
+    public async Task<IActionResult> Index()
+    {
+        var events = new List<PortalLogEvent>();
+        var now = DateTime.UtcNow;
+
+        events.Add(new PortalLogEvent(now, "INFO", "Portal", "FlowOps Logs Viewer loaded from live platform services."));
+
+        try
+        {
+            var deployments = await _deploys.GetDeploymentHistoryAsync(take: 5);
+            foreach (var dep in deployments)
+            {
+                var duration = dep.Duration.HasValue ? $" Duration: {dep.Duration.Value.TotalSeconds:F0}s." : "";
+                events.Add(new PortalLogEvent(
+                    dep.StartedAt,
+                    dep.Status == DeploymentStatus.Failed ? "ERROR" : "INFO",
+                    "Deployment",
+                    $"Deployment record status: {dep.Status}.{duration}"
+                ));
+            }
+        }
+        catch (Exception ex)
+        {
+            events.Add(new PortalLogEvent(now, "WARN", "Deployment", $"Could not read deployment history: {ex.Message}"));
+        }
+
+        try
+        {
+            var apps = await _k8s.GetRunningApplicationsAsync();
+            var running = apps.Count(a => a.Status == AppStatus.Running);
+            var replicas = apps.Sum(a => a.ReplicaCount);
+
+            events.Add(new PortalLogEvent(
+                now.AddSeconds(-10),
+                running > 0 ? "INFO" : "WARN",
+                "Kubernetes",
+                $"Kubernetes reports {running} running applications with {replicas} active replicas."
+            ));
+        }
+        catch (Exception ex)
+        {
+            events.Add(new PortalLogEvent(now, "WARN", "Kubernetes", $"Could not read Kubernetes state: {ex.Message}"));
+        }
+
+        try
+        {
+            var argoApps = await _argo.GetAllAppStatusesAsync();
+            var synced = argoApps.Count(a => a.SyncStatus == SyncStatus.Synced);
+            var healthy = argoApps.Count(a => a.HealthStatus == HealthStatus.Healthy);
+
+            events.Add(new PortalLogEvent(
+                now.AddSeconds(-20),
+                synced == argoApps.Count && healthy == argoApps.Count ? "INFO" : "WARN",
+                "ArgoCD",
+                $"ArgoCD reports {synced}/{argoApps.Count} applications Synced and {healthy}/{argoApps.Count} Healthy."
+            ));
+        }
+        catch (Exception ex)
+        {
+            events.Add(new PortalLogEvent(now, "WARN", "ArgoCD", $"Could not read ArgoCD state: {ex.Message}"));
+        }
+
+        try
+        {
+            var alerts = await _prom.GetActiveAlertsAsync();
+            var critical = alerts.Count(a => a.Severity == AlertSeverity.Critical && !a.IsResolved);
+
+            events.Add(new PortalLogEvent(
+                now.AddSeconds(-30),
+                critical == 0 ? "INFO" : "ERROR",
+                "Monitoring",
+                critical == 0
+                    ? "Prometheus reports no active critical alerts."
+                    : $"Prometheus reports {critical} active critical alerts."
+            ));
+        }
+        catch (Exception ex)
+        {
+            events.Add(new PortalLogEvent(now, "WARN", "Monitoring", $"Could not read Prometheus alerts: {ex.Message}"));
+        }
+
+        events = events
+            .OrderByDescending(e => e.Time)
+            .Take(12)
+            .ToList();
+
+        return View(events);
+    }
 }
