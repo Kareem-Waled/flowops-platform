@@ -1,0 +1,86 @@
+@{
+    ViewData["Title"] = "Logs";
+
+    var logs = new[]
+    {
+        new { Time = "Just now", Level = "INFO", Source = "Portal", Message = "FlowOps portal loaded successfully." },
+        new { Time = "1 min ago", Level = "INFO", Source = "Jenkins", Message = "Production deployment pipeline finished successfully." },
+        new { Time = "2 min ago", Level = "INFO", Source = "DockerHub", Message = "Image tags pushed: user-service:prod-1 and product-service:prod-1." },
+        new { Time = "3 min ago", Level = "INFO", Source = "ArgoCD", Message = "flowops-production application is Synced and Healthy." },
+        new { Time = "4 min ago", Level = "INFO", Source = "ArgoCD", Message = "flowops-staging application is Synced and Healthy." },
+        new { Time = "5 min ago", Level = "INFO", Source = "Kubernetes", Message = "Staging and production pods are running." },
+        new { Time = "6 min ago", Level = "INFO", Source = "Monitoring", Message = "Prometheus and Grafana monitoring stack is running." },
+        new { Time = "7 min ago", Level = "WARN", Source = "System", Message = "Full centralized logging stack is planned as future work." }
+    };
+}
+
+<div class="logs-hero">
+    <div>
+        <div class="eyebrow">Observability</div>
+        <h1>FlowOps Logs Viewer</h1>
+        <p>
+            A simple operational logs view for the FlowOps delivery cycle.
+            It summarizes deployment, GitOps, Kubernetes and monitoring events in one place.
+        </p>
+    </div>
+    <div class="logs-badge">
+        <i class="ti ti-terminal-2"></i>
+        MVP Logs
+    </div>
+</div>
+
+<div class="logs-grid">
+    <div class="logs-card">
+        <div class="logs-card-icon"><i class="ti ti-rocket"></i></div>
+        <div>
+            <h3>Deployment Logs</h3>
+            <p>Jenkins build, Docker image publishing and manifest update events.</p>
+        </div>
+    </div>
+
+    <div class="logs-card">
+        <div class="logs-card-icon"><i class="ti ti-brand-kubernetes"></i></div>
+        <div>
+            <h3>Kubernetes Logs</h3>
+            <p>Staging and production pod state, replicas and runtime status.</p>
+        </div>
+    </div>
+
+    <div class="logs-card">
+        <div class="logs-card-icon"><i class="ti ti-activity"></i></div>
+        <div>
+            <h3>Monitoring Logs</h3>
+            <p>Prometheus, Grafana and monitoring stack health evidence.</p>
+        </div>
+    </div>
+</div>
+
+<div class="logs-panel">
+    <div class="logs-panel-head">
+        <div>
+            <h2>Recent Operational Events</h2>
+            <p>Last events from the FlowOps local DevOps workflow.</p>
+        </div>
+        <span class="logs-live"><span></span> Live Demo View</span>
+    </div>
+
+    <div class="logs-table">
+        @foreach (var log in logs)
+        {
+            var levelClass = log.Level.ToLowerInvariant();
+            <div class="log-row">
+                <div class="log-time">@log.Time</div>
+                <div class="log-level @levelClass">@log.Level</div>
+                <div class="log-source">@log.Source</div>
+                <div class="log-message">@log.Message</div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="logs-note">
+    <i class="ti ti-info-circle"></i>
+    <span>
+        This page is an initial portal-level logs viewer. A full centralized logging solution such as Loki or ELK can be added as future work.
+    </span>
+</div>

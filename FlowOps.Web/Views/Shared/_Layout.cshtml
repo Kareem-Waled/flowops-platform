@@ -33,6 +33,7 @@
     </div>
 
     <div class="sg"><div class="sl">System</div>
+      <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Logs"?"on":"")" asp-controller="Logs" asp-action="Index"><i class="ti ti-terminal-2"></i>Logs</a>
       <a class="nb @(ViewContext.RouteData.Values["controller"]?.ToString()=="Settings"?"on":"")" asp-controller="Settings" asp-action="Index"><i class="ti ti-settings"></i>Settings</a>
     </div>
 

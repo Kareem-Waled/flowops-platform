@@ -162,3 +162,8 @@ public class SettingsController : Controller
     [HttpPost][ValidateAntiForgeryToken]
     public IActionResult Save(){TempData["Success"]="Settings saved successfully";return RedirectToAction(nameof(Index));}
 }
+
+public class LogsController : Controller
+{
+    public IActionResult Index() => View();
+}
